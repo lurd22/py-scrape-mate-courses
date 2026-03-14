@@ -2,7 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 from dataclasses import dataclass
 
-
 URL = "https://mate.academy/en/"
 
 
@@ -13,7 +12,7 @@ class Course:
     duration: str
 
 
-def get_page(url: str) -> str:
+def fetch_page(url: str) -> str:
     response = requests.get(url)
     response.raise_for_status()
     return response.text
@@ -23,28 +22,26 @@ def parse_courses(html: str) -> list[Course]:
     soup = BeautifulSoup(html, "html.parser")
     courses: list[Course] = []
 
-    career_blocks = soup.select("section h3")
+    course_cards = soup.select("section a[href*='courses'], section a[href*='career']")
 
-    for block in career_blocks:
-        name = block.get_text(strip=True)
+    for card in course_cards:
+        name_tag = card.select_one("h3")
+        desc_tag = card.select_one("p")
 
-        parent = block.parent
-        text = parent.get_text(" ", strip=True)
+        name = name_tag.get_text(strip=True) if name_tag else ""
+        short_description = desc_tag.get_text(strip=True) if desc_tag else ""
 
         duration = ""
-        short_description = ""
-
+        text = card.get_text(" ", strip=True)
         words = text.split()
 
         for i, word in enumerate(words):
-            if "+" in word and "month" in words[i + 1]:
-                duration = f"{word} {words[i + 1]}"
-                break
+            if "+" in word and i + 1 < len(words):  # FIX: prevent IndexError
+                if "month" in words[i + 1]:
+                    duration = f"{word} {words[i + 1]}"
+                    break
 
-        if duration:
-            short_description = text.split(duration)[-1].strip()
-
-        if name and short_description:
+        if name:
             courses.append(
                 Course(
                     name=name,
@@ -57,5 +54,5 @@ def parse_courses(html: str) -> list[Course]:
 
 
 def get_all_courses() -> list[Course]:
-    html = get_page(URL)
+    html = fetch_page(URL)
     return parse_courses(html)
