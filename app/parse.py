@@ -22,8 +22,10 @@ def parse_courses(html: str) -> list[Course]:
     soup = BeautifulSoup(html, "html.parser")
     courses: list[Course] = []
 
-    course_cards = soup.select("section a[href*='courses'], section a[href*='career']")
-
+    course_cards = soup.select(
+        "section a[href*='courses'], "
+        "section a[href*='career']"
+    )
     for card in course_cards:
         name_tag = card.select_one("h3")
         desc_tag = card.select_one("p")
