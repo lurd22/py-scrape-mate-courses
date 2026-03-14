@@ -1,6 +1,7 @@
-import requests
 from bs4 import BeautifulSoup
 from dataclasses import dataclass
+from urllib.request import urlopen
+
 
 URL = "https://mate.academy/en/"
 
@@ -13,9 +14,8 @@ class Course:
 
 
 def fetch_page(url: str) -> str:
-    response = requests.get(url)
-    response.raise_for_status()
-    return response.text
+    with urlopen(url) as response:
+        return response.read().decode("utf-8")
 
 
 def parse_courses(html: str) -> list[Course]:
